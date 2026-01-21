@@ -1,11 +1,19 @@
 # Node
 node_modules/
-
-# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OS
+# Environment files
+.env
+
+# OS files
 .DS_Store
 Thumbs.db
+
+# Editor
+.vscode/
+
+# Build artifacts
+dist/
+build/
