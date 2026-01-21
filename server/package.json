@@ -1,18 +1,14 @@
 {
   "name": "tic-tac-toe-multiplayer",
   "version": "1.0.0",
-  "description": "Multiplayer Tic Tac Toe with login and high scores",
+  "description": "Multiplayer Tic Tac Toe using Node.js and Socket.IO",
   "main": "server.js",
-  "type": "commonjs",
   "scripts": {
     "start": "node server.js"
   },
+  "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "connect-mongo": "^5.1.0",
     "express": "^4.19.2",
-    "express-session": "^1.17.3",
-    "mongoose": "^8.8.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.3"
   }
 }
