@@ -13,13 +13,11 @@ const game = {
   gameEnded: false,
   scores: { X: 0, O: 0 },
   highScore: 0,
+  playerName: "",
 
   boardEl: document.getElementById("board"),
   statusEl: document.getElementById("status"),
   inviteBox: document.getElementById("inviteBox"),
-
-  playerXEl: document.getElementById("playerX"),
-  playerOEl: document.getElementById("playerO"),
   xScoreEl: document.getElementById("xScore"),
   oScoreEl: document.getElementById("oScore"),
 
@@ -38,14 +36,14 @@ const authError = document.getElementById("authError");
 document.getElementById("loginBtn").onclick = async () => {
   authError.textContent = "";
   const res = await login(authUsername.value, authPassword.value);
-  if (res.error) return authError.textContent = res.error;
+  if (res.error) return (authError.textContent = res.error);
   startGame(res);
 };
 
 document.getElementById("registerBtn").onclick = async () => {
   authError.textContent = "";
   const res = await register(authUsername.value, authPassword.value);
-  if (res.error) return authError.textContent = res.error;
+  if (res.error) return (authError.textContent = res.error);
   startGame(res);
 };
 
