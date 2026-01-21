@@ -6,11 +6,12 @@ import { startMultiplayer } from "./multiplayer.js";
 
 const socket = io();
 
-/* ================= DOM REFERENCES ================= */
+/* ================= DOM ================= */
 const authModal = document.getElementById("authModal");
 const authUsername = document.getElementById("authUsername");
 const authPassword = document.getElementById("authPassword");
 const authError = document.getElementById("authError");
+
 const loginBtn = document.getElementById("loginBtn");
 const registerBtn = document.getElementById("registerBtn");
 
@@ -40,23 +41,15 @@ const game = {
 /* ================= AUTH ================= */
 loginBtn.onclick = async () => {
   authError.textContent = "";
-
   const res = await login(authUsername.value, authPassword.value);
-  if (res.error) {
-    authError.textContent = res.error;
-    return;
-  }
+  if (res.error) return (authError.textContent = res.error);
   startGame(res);
 };
 
 registerBtn.onclick = async () => {
   authError.textContent = "";
-
   const res = await register(authUsername.value, authPassword.value);
-  if (res.error) {
-    authError.textContent = res.error;
-    return;
-  }
+  if (res.error) return (authError.textContent = res.error);
   startGame(res);
 };
 
@@ -70,25 +63,38 @@ function startGame(user) {
   init();
 }
 
-/* ================= GAME INIT ================= */
+/* ================= INIT ================= */
 function init() {
   game.board = Array(9).fill("");
   game.currentPlayer = "X";
   game.gameEnded = false;
+
   clearAnimations(boardEl);
+
+  // ✅ ALWAYS render the board first
+  renderBoard(game.board, boardEl, i => handleMove(i));
 
   if (modeSelect.value === "offline") {
     startOffline(game);
-    renderBoard(game.board, boardEl, i => handleOfflineMove(i, game));
   } else if (modeSelect.value === "ai") {
     startAI(game);
-    renderBoard(game.board, boardEl, i => handleAIMove(i, game));
   } else {
     startMultiplayer(game, socket);
   }
 }
 
 modeSelect.onchange = init;
+
+/* ================= MOVE HANDLER ================= */
+function handleMove(index) {
+  if (modeSelect.value === "offline") {
+    handleOfflineMove(index, game);
+  } else if (modeSelect.value === "ai") {
+    handleAIMove(index, game);
+  } else {
+    socket.emit("move", index);
+  }
+}
 
 /* ================= BUTTONS ================= */
 document.getElementById("restartBtn").onclick = init;
