@@ -2,34 +2,52 @@
  * MongoDB + Express + Socket.IO
  *********************************/
 
-require("./db"); // MongoDB connection (db.js)
-
 const express = require("express");
 const http = require("http");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+const mongoose = require("mongoose");
 const { Server } = require("socket.io");
 
 const User = require("./models/User");
 
+/*********************************
+ * MONGODB CONNECTION
+ *********************************/
+console.log("Attempting MongoDB connection...");
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected SUCCESSFULLY");
+  })
+  .catch(err => {
+    console.error("MongoDB connection FAILED:", err.message);
+    process.exit(1);
+  });
+
+/*********************************
+ * EXPRESS SETUP
+ *********************************/
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-/*********************************
- * MIDDLEWARE
- *********************************/
 app.use(express.json());
 
+/*********************************
+ * SESSION SETUP (FIXED)
+ *********************************/
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    name: "tic-tac-toe-session",
+    secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI
+      client: mongoose.connection.getClient()
     }),
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 // 1 day
@@ -50,7 +68,7 @@ app.get("/", (req, res) => {
  * AUTH APIs
  *********************************/
 
-// Register (New User)
+// Register
 app.post("/api/register", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -59,8 +77,8 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ error: "All fields required" });
     }
 
-    const existing = await User.findOne({ username });
-    if (existing) {
+    const exists = await User.findOne({ username });
+    if (exists) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
@@ -83,7 +101,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// Login (Existing User)
+// Login
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -93,8 +111,8 @@ app.post("/api/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match) {
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -110,7 +128,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// Get logged-in user (session)
+// Session check
 app.get("/api/me", async (req, res) => {
   if (!req.session.userId) return res.json(null);
 
@@ -189,7 +207,6 @@ io.on("connection", socket => {
     if (winLine) {
       game.gameOver = true;
       game.score[player]++;
-
       io.to(roomId).emit("gameOver", {
         winner: player,
         winLine,
@@ -205,25 +222,6 @@ io.on("connection", socket => {
     }
 
     game.currentPlayer = player === "X" ? "O" : "X";
-    io.to(roomId).emit("state", game);
-  });
-
-  socket.on("restartGame", roomId => {
-    const game = games[roomId];
-    if (!game) return;
-
-    game.board = Array(9).fill("");
-    game.currentPlayer = "X";
-    game.gameOver = false;
-
-    io.to(roomId).emit("state", game);
-  });
-
-  socket.on("clearScore", roomId => {
-    const game = games[roomId];
-    if (!game) return;
-
-    game.score = { X: 0, O: 0 };
     io.to(roomId).emit("state", game);
   });
 });
