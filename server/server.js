@@ -1,31 +1,140 @@
-require("./db");
+/*********************************
+ * MongoDB + Express + Socket.IO
+ *********************************/
+
+require("./db"); // MongoDB connection (db.js)
+
 const express = require("express");
 const http = require("http");
 const path = require("path");
+const bcrypt = require("bcrypt");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const { Server } = require("socket.io");
+
+const User = require("./models/User");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-/* ===============================
-   SERVE FRONTEND LOCALLY
-================================ */
+/*********************************
+ * MIDDLEWARE
+ *********************************/
+app.use(express.json());
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI
+    }),
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 // 1 day
+    }
+  })
+);
+
+/*********************************
+ * SERVE FRONTEND
+ *********************************/
 app.use(express.static(path.join(__dirname, "../client")));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/index.html"));
 });
 
-/* ===============================
-   GAME LOGIC
-================================ */
+/*********************************
+ * AUTH APIs
+ *********************************/
+
+// Register (New User)
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+
+    const existing = await User.findOne({ username });
+    if (existing) {
+      return res.status(400).json({ error: "Username already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      username,
+      passwordHash
+    });
+
+    req.session.userId = user._id;
+
+    res.json({
+      username: user.username,
+      highScore: user.highScore
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+// Login (Existing User)
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    req.session.userId = user._id;
+
+    res.json({
+      username: user.username,
+      highScore: user.highScore
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// Get logged-in user (session)
+app.get("/api/me", async (req, res) => {
+  if (!req.session.userId) return res.json(null);
+
+  const user = await User.findById(req.session.userId).select(
+    "username highScore"
+  );
+
+  res.json(user);
+});
+
+/*********************************
+ * GAME LOGIC (Socket.IO)
+ *********************************/
 const games = {};
 
 const winPatterns = [
-  [0,1,2],[3,4,5],[6,7,8],
-  [0,3,6],[1,4,7],[2,5,8],
-  [0,4,8],[2,4,6]
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6]
 ];
 
 function getWinLine(board, player) {
@@ -33,7 +142,6 @@ function getWinLine(board, player) {
 }
 
 io.on("connection", socket => {
-
   socket.on("joinRoom", ({ roomId, name }) => {
     socket.join(roomId);
 
@@ -120,10 +228,10 @@ io.on("connection", socket => {
   });
 });
 
-/* ===============================
-   START SERVER
-================================ */
-const PORT = process.env.PORT || 3000;
+/*********************************
+ * START SERVER
+ *********************************/
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
