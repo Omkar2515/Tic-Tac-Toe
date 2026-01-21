@@ -1,21 +1,38 @@
-export function renderBoard(board, boardEl, onClick) {
+export function renderBoard(board, boardEl, onCellClick) {
+  // Clear board
   boardEl.innerHTML = "";
-  board.forEach((v,i) => {
+
+  // Ensure grid styling (defensive)
+  boardEl.style.display = "grid";
+  boardEl.style.gridTemplateColumns = "repeat(3, 1fr)";
+  boardEl.style.gap = "10px";
+
+  board.forEach((value, index) => {
     const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.textContent = v;
-    cell.onclick = () => onClick(i);
+
+    cell.textContent = value;
+    cell.dataset.index = index;
+
+    // Explicit cell styling so it is ALWAYS visible
+    cell.style.height = "90px";
+    cell.style.background = "#94B4C1";
+    cell.style.borderRadius = "10px";
+    cell.style.display = "flex";
+    cell.style.alignItems = "center";
+    cell.style.justifyContent = "center";
+    cell.style.fontSize = "36px";
+    cell.style.cursor = "pointer";
+    cell.style.userSelect = "none";
+
+    cell.onclick = () => onCellClick(index);
+
     boardEl.appendChild(cell);
   });
 }
 
-export function animateWin(boardEl, line) {
-  [...boardEl.children].forEach((c,i)=>{
-    c.classList.add(line.includes(i) ? "win" : "lose");
-  });
-}
-
 export function clearAnimations(boardEl) {
-  boardEl.classList.remove("draw");
-  [...boardEl.children].forEach(c => c.classList.remove("win","lose"));
+  if (!boardEl) return;
+  [...boardEl.children].forEach(cell => {
+    cell.style.animation = "none";
+  });
 }
