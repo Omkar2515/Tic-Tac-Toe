@@ -8,12 +8,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 /* ===============================
-   SERVE FRONTEND (RENDER SAFE)
-   Render root directory = server
-   Client folder = ../client
+   SERVE FRONTEND (Render root = server)
 ================================ */
 const CLIENT_PATH = path.join(__dirname, "..", "client");
-
 app.use(express.static(CLIENT_PATH));
 
 app.get("/", (req, res) => {
@@ -85,6 +82,9 @@ io.on("connection", socket => {
       game.gameOver = true;
       game.score[player]++;
 
+      // ✅ send final board FIRST
+      io.to(roomId).emit("state", game);
+
       io.to(roomId).emit("gameOver", {
         winner: player,
         winLine,
@@ -95,6 +95,8 @@ io.on("connection", socket => {
 
     if (game.board.every(c => c)) {
       game.gameOver = true;
+
+      io.to(roomId).emit("state", game);
       io.to(roomId).emit("gameOver", { draw: true });
       return;
     }
@@ -111,7 +113,10 @@ io.on("connection", socket => {
     game.currentPlayer = "X";
     game.gameOver = false;
 
-    io.to(roomId).emit("state", game);
+    io.to(roomId).emit("state", {
+      ...game,
+      restarted: true
+    });
   });
 
   socket.on("clearScore", roomId => {

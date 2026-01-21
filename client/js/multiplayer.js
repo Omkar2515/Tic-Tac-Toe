@@ -1,8 +1,6 @@
 import { renderBoard, animateWin, clearAnimations } from "./ui.js";
 
 export function startMultiplayer(game, socket) {
-
-  const params = new URLSearchParams(location.search);
   const roomId = game.roomId;
   history.replaceState({}, "", `?room=${roomId}`);
   document.getElementById("roomLink").textContent = location.href;
@@ -11,7 +9,7 @@ export function startMultiplayer(game, socket) {
   socket.emit("joinRoom", { roomId, name: game.playerName });
 
   socket.on("state", g => {
-    // 🔓 allow restart to unlock UI
+
     if (g.restarted) {
       game.gameEnded = false;
       clearAnimations(game.boardEl);
@@ -24,7 +22,6 @@ export function startMultiplayer(game, socket) {
     game.scores = g.score;
     game.updateScore();
 
-    // ✅ PLAYER NAMES (FIXED)
     game.playerXEl.textContent = `X : ${g.names.X || "Player X"}`;
     game.playerOEl.textContent = `O : ${g.names.O || "Player O"}`;
 
@@ -32,7 +29,6 @@ export function startMultiplayer(game, socket) {
       socket.emit("makeMove", { roomId, index: i })
     );
 
-    // ✅ TURN INDICATOR (FIXED)
     game.statusEl.textContent =
       game.gameEnded
         ? game.statusEl.textContent
@@ -47,6 +43,10 @@ export function startMultiplayer(game, socket) {
     if (data.draw) {
       game.statusEl.textContent = "Draw";
       game.boardEl.classList.add("draw");
+
+      [...game.boardEl.children].forEach(c =>
+        c.classList.add("lose")
+      );
       return;
     }
 

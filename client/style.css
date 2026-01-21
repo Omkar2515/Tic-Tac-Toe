@@ -126,3 +126,8 @@ select,button{
   font-weight:600;
   color:var(--dark);
 }
+
+.board.draw .cell {
+  background: #b0b0b0;
+  opacity: 0.85;
+}
