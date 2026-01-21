@@ -8,10 +8,10 @@
 </head>
 <body>
 
-<!-- ================= AUTH MODAL (VISIBLE BY DEFAULT) ================= -->
+<!-- AUTH MODAL -->
 <div id="authModal" class="modal">
   <div class="modal-box">
-    <h2>Welcome 👋</h2>
+    <h2>Login / New User</h2>
 
     <input id="authUsername" type="text" placeholder="Username" />
     <input id="authPassword" type="password" placeholder="Password" />
@@ -23,7 +23,7 @@
   </div>
 </div>
 
-<!-- ================= GAME UI (HIDDEN INITIALLY) ================= -->
+<!-- GAME UI -->
 <div id="gameUI" class="game hidden">
 
   <h2>Tic Tac Toe</h2>
@@ -53,7 +53,6 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script type="module" src="js/main.js"></script>
-
+<script type="module" src="/js/main.js"></script>
 </body>
 </html>

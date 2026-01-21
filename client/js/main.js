@@ -6,6 +6,22 @@ import { startMultiplayer } from "./multiplayer.js";
 
 const socket = io();
 
+/* ================= DOM REFERENCES ================= */
+const authModal = document.getElementById("authModal");
+const authUsername = document.getElementById("authUsername");
+const authPassword = document.getElementById("authPassword");
+const authError = document.getElementById("authError");
+const loginBtn = document.getElementById("loginBtn");
+const registerBtn = document.getElementById("registerBtn");
+
+const gameUI = document.getElementById("gameUI");
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const inviteBox = document.getElementById("inviteBox");
+const xScoreEl = document.getElementById("xScore");
+const oScoreEl = document.getElementById("oScore");
+const modeSelect = document.getElementById("mode");
+
 /* ================= GAME STATE ================= */
 const game = {
   board: Array(9).fill(""),
@@ -15,35 +31,32 @@ const game = {
   highScore: 0,
   playerName: "",
 
-  boardEl: document.getElementById("board"),
-  statusEl: document.getElementById("status"),
-  inviteBox: document.getElementById("inviteBox"),
-  xScoreEl: document.getElementById("xScore"),
-  oScoreEl: document.getElementById("oScore"),
-
   updateScore() {
-    this.xScoreEl.textContent = this.scores.X;
-    this.oScoreEl.textContent = this.scores.O;
+    xScoreEl.textContent = this.scores.X;
+    oScoreEl.textContent = this.scores.O;
   }
 };
 
 /* ================= AUTH ================= */
-const authModal = document.getElementById("authModal");
-const authUsername = document.getElementById("authUsername");
-const authPassword = document.getElementById("authPassword");
-const authError = document.getElementById("authError");
-
-document.getElementById("loginBtn").onclick = async () => {
+loginBtn.onclick = async () => {
   authError.textContent = "";
+
   const res = await login(authUsername.value, authPassword.value);
-  if (res.error) return (authError.textContent = res.error);
+  if (res.error) {
+    authError.textContent = res.error;
+    return;
+  }
   startGame(res);
 };
 
-document.getElementById("registerBtn").onclick = async () => {
+registerBtn.onclick = async () => {
   authError.textContent = "";
+
   const res = await register(authUsername.value, authPassword.value);
-  if (res.error) return (authError.textContent = res.error);
+  if (res.error) {
+    authError.textContent = res.error;
+    return;
+  }
   startGame(res);
 };
 
@@ -52,26 +65,24 @@ function startGame(user) {
   game.highScore = user.highScore;
 
   authModal.classList.add("hidden");
-  document.getElementById("gameUI").classList.remove("hidden");
+  gameUI.classList.remove("hidden");
 
   init();
 }
 
 /* ================= GAME INIT ================= */
-const modeSelect = document.getElementById("mode");
-
 function init() {
   game.board = Array(9).fill("");
   game.currentPlayer = "X";
   game.gameEnded = false;
-  clearAnimations(game.boardEl);
+  clearAnimations(boardEl);
 
   if (modeSelect.value === "offline") {
     startOffline(game);
-    renderBoard(game.board, game.boardEl, i => handleOfflineMove(i, game));
+    renderBoard(game.board, boardEl, i => handleOfflineMove(i, game));
   } else if (modeSelect.value === "ai") {
     startAI(game);
-    renderBoard(game.board, game.boardEl, i => handleAIMove(i, game));
+    renderBoard(game.board, boardEl, i => handleAIMove(i, game));
   } else {
     startMultiplayer(game, socket);
   }
