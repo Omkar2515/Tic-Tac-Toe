@@ -1,55 +1,22 @@
-const { Server } = require("socket.io");
+export function startMultiplayer(game, socket) {
+  let room = new URLSearchParams(window.location.search).get("room");
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
+  if (!room) {
+    room = Math.random().toString(36).substring(2, 8);
+    history.replaceState({}, "", `?room=${room}`);
   }
-});
 
-const rooms = {};
+  game.room = room;
 
-io.on("connection", socket => {
+  socket.emit("joinRoom", room);
 
-  socket.on("joinRoom", room => {
-    socket.join(room);
-
-    if (!rooms[room]) {
-      rooms[room] = {
-        board: Array(9).fill(""),
-        currentPlayer: "X",
-        players: []
-      };
-    }
-
-    rooms[room].players.push(socket.id);
-
-    const symbol = rooms[room].players.length === 1 ? "X" : "O";
-    socket.emit("start", symbol);
+  socket.on("start", symbol => {
+    game.currentPlayer = symbol;
   });
 
-  socket.on("move", index => {
-    const room = [...socket.rooms][1];
-    if (!room) return;
-
-    const game = rooms[room];
-    if (!game || game.board[index]) return;
-
-    game.board[index] = game.currentPlayer;
-    game.currentPlayer = game.currentPlayer === "X" ? "O" : "X";
-
-    io.to(room).emit("update", {
-      board: game.board,
-      currentPlayer: game.currentPlayer,
-      gameEnded: false
-    });
+  socket.on("update", data => {
+    game.board = data.board;
+    game.currentPlayer = data.currentPlayer;
+    game.gameEnded = data.gameEnded;
   });
-
-  socket.on("disconnect", () => {
-    for (const room in rooms) {
-      rooms[room].players = rooms[room].players.filter(id => id !== socket.id);
-      if (rooms[room].players.length === 0) {
-        delete rooms[room];
-      }
-    }
-  });
-});
+}
