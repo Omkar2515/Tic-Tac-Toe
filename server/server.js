@@ -8,12 +8,14 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 /* ===============================
-   SERVE FRONTEND LOCALLY
+   SERVE FRONTEND (RENDER SAFE)
 ================================ */
-app.use(express.static(path.join(__dirname, "../client")));
+const CLIENT_PATH = path.join(process.cwd(), "client");
+
+app.use(express.static(CLIENT_PATH));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/index.html"));
+  res.sendFile(path.join(CLIENT_PATH, "index.html"));
 });
 
 /* ===============================
