@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tic Tac Toe</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ================= NAME MODAL ================= -->
+<div id="nameModal" class="modal">
+  <div class="modal-box">
+    <h2>Welcome 👋</h2>
+    <p>Enter your name to start</p>
+
+    <input
+      id="nameInput"
+      type="text"
+      placeholder="Your name"
+      autocomplete="off"
+    />
+
+    <button id="startBtn">Start Game</button>
+  </div>
+</div>
+
+<!-- ================= GAME UI ================= -->
+<div id="gameUI" class="game hidden">
+
+  <h2>Tic Tac Toe</h2>
+
+  <!-- Controls -->
+  <div class="controls">
+    <select id="mode">
+      <option value="online">Online Multiplayer</option>
+      <option value="offline">Player vs Player (Offline)</option>
+      <option value="ai">Player vs AI</option>
+    </select>
+
+    <select id="difficulty">
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+  </div>
+
+  <!-- Invite link (online only) -->
+  <p class="invite" id="inviteBox">
+    Share this link:
+    <br />
+    <span id="roomLink"></span>
+  </p>
+
+  <!-- Game board -->
+  <div id="board" class="board"></div>
+
+  <!-- Player names -->
+  <div class="players">
+    <span id="playerX">X</span>
+    <span id="playerO">O</span>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="score">
+    <span id="xScore">0</span> : <span id="oScore">0</span>
+  </div>
+
+  <!-- Status -->
+  <p id="status"></p>
+
+  <!-- Buttons -->
+  <div class="buttons">
+    <button id="restartBtn">Restart</button>
+    <button id="clearScoreBtn">Clear Score</button>
+  </div>
+
+</div>
+
+<!-- ================= SCRIPTS ================= -->
+
+<!-- Socket.IO (served by Node server) -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Main JS entry point (ES Module) -->
+<script type="module" src="js/main.js"></script>
+
+</body>
+</html>
