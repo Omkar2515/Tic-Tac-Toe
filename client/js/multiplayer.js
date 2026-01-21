@@ -1,56 +1,55 @@
-import { renderBoard, animateWin, clearAnimations } from "./ui.js";
+const { Server } = require("socket.io");
 
-export function startMultiplayer(game, socket) {
+const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+});
 
-  const params = new URLSearchParams(location.search);
-  const roomId = game.roomId;
-  history.replaceState({}, "", `?room=${roomId}`);
-  document.getElementById("roomLink").textContent = location.href;
+const rooms = {};
 
-  socket.off();
-  socket.emit("joinRoom", { roomId, name: game.playerName });
+io.on("connection", socket => {
 
-  socket.on("state", g => {
-    // 🔓 allow restart to unlock UI
-    if (g.restarted) {
-      game.gameEnded = false;
-      clearAnimations(game.boardEl);
+  socket.on("joinRoom", room => {
+    socket.join(room);
+
+    if (!rooms[room]) {
+      rooms[room] = {
+        board: Array(9).fill(""),
+        currentPlayer: "X",
+        players: []
+      };
     }
 
-    if (game.gameEnded && !g.restarted) return;
+    rooms[room].players.push(socket.id);
 
-    game.board = g.board;
-    game.currentPlayer = g.currentPlayer;
-    game.scores = g.score;
-    game.updateScore();
-
-    // ✅ PLAYER NAMES (FIXED)
-    game.playerXEl.textContent = `X : ${g.names.X || "Player X"}`;
-    game.playerOEl.textContent = `O : ${g.names.O || "Player O"}`;
-
-    renderBoard(game.board, game.boardEl, i =>
-      socket.emit("makeMove", { roomId, index: i })
-    );
-
-    // ✅ TURN INDICATOR (FIXED)
-    game.statusEl.textContent =
-      game.gameEnded
-        ? game.statusEl.textContent
-        : game.currentPlayer === "X"
-          ? "X's turn"
-          : "O's turn";
+    const symbol = rooms[room].players.length === 1 ? "X" : "O";
+    socket.emit("start", symbol);
   });
 
-  socket.on("gameOver", data => {
-    game.gameEnded = true;
+  socket.on("move", index => {
+    const room = [...socket.rooms][1];
+    if (!room) return;
 
-    if (data.draw) {
-      game.statusEl.textContent = "Draw";
-      game.boardEl.classList.add("draw");
-      return;
+    const game = rooms[room];
+    if (!game || game.board[index]) return;
+
+    game.board[index] = game.currentPlayer;
+    game.currentPlayer = game.currentPlayer === "X" ? "O" : "X";
+
+    io.to(room).emit("update", {
+      board: game.board,
+      currentPlayer: game.currentPlayer,
+      gameEnded: false
+    });
+  });
+
+  socket.on("disconnect", () => {
+    for (const room in rooms) {
+      rooms[room].players = rooms[room].players.filter(id => id !== socket.id);
+      if (rooms[room].players.length === 0) {
+        delete rooms[room];
+      }
     }
-
-    animateWin(game.boardEl, data.winLine);
-    game.statusEl.textContent = `${data.name} wins`;
   });
-}
+});
