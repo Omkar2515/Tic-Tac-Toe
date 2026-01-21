@@ -1,3 +1,4 @@
+import { login, register, getSessionUser } from "./auth.js";
 import { renderBoard, clearAnimations } from "./ui.js";
 import { startOffline, handleOfflineMove } from "./offline.js";
 import { startAI, handleAIMove } from "./ai.js";
@@ -11,6 +12,7 @@ const game = {
   currentPlayer: "X",
   gameEnded: false,
   scores: { X: 0, O: 0 },
+  highScore: 0,
 
   boardEl: document.getElementById("board"),
   statusEl: document.getElementById("status"),
@@ -27,96 +29,72 @@ const game = {
   }
 };
 
-/* ================= ELEMENTS ================= */
-const modal = document.getElementById("nameModal");
-const startBtn = document.getElementById("startBtn");
-const nameInput = document.getElementById("nameInput");
+/* ================= AUTH ================= */
+const authModal = document.getElementById("authModal");
+const authUsername = document.getElementById("authUsername");
+const authPassword = document.getElementById("authPassword");
+const authError = document.getElementById("authError");
 
-const modeSelect = document.getElementById("mode");
-const restartBtn = document.getElementById("restartBtn");
-const clearScoreBtn = document.getElementById("clearScoreBtn");
+document.getElementById("loginBtn").onclick = async () => {
+  authError.textContent = "";
+  const res = await login(authUsername.value, authPassword.value);
+  if (res.error) return authError.textContent = res.error;
+  startGame(res);
+};
 
-/* ================= START ================= */
-startBtn.onclick = () => {
-  const name = nameInput.value.trim();
-  if (!name) return;
+document.getElementById("registerBtn").onclick = async () => {
+  authError.textContent = "";
+  const res = await register(authUsername.value, authPassword.value);
+  if (res.error) return authError.textContent = res.error;
+  startGame(res);
+};
 
-  game.playerName = name;
+function startGame(user) {
+  game.playerName = user.username;
+  game.highScore = user.highScore;
 
-  modal.classList.add("hidden");
+  authModal.classList.add("hidden");
   document.getElementById("gameUI").classList.remove("hidden");
 
   init();
-};
+}
 
-modeSelect.onchange = init;
+/* ================= GAME INIT ================= */
+const modeSelect = document.getElementById("mode");
 
-/* ================= BUTTONS (FIXED) ================= */
-restartBtn.onclick = () => {
-  clearAnimations(game.boardEl);
-  game.gameEnded = false;
-
-  if (modeSelect.value === "online") {
-    socket.emit("restartGame", game.roomId);
-  } else {
-    game.board = Array(9).fill("");
-    game.currentPlayer = "X";
-    game.statusEl.textContent =
-      modeSelect.value === "offline"
-        ? "Player X's turn"
-        : "Your turn";
-    render();
-  }
-};
-
-clearScoreBtn.onclick = () => {
-  game.scores = { X: 0, O: 0 };
-  game.updateScore();
-
-  if (modeSelect.value === "online") {
-    socket.emit("clearScore", game.roomId);
-  }
-};
-
-/* ================= INIT ================= */
 function init() {
   game.board = Array(9).fill("");
   game.currentPlayer = "X";
   game.gameEnded = false;
   clearAnimations(game.boardEl);
 
-  const mode = modeSelect.value;
-
-  if (mode === "offline") {
-    game.inviteBox.style.display = "none";
-    game.playerXEl.textContent = `X : ${game.playerName}`;
-    game.playerOEl.textContent = "O : Player 2";
-    game.statusEl.textContent = "Player X's turn";
+  if (modeSelect.value === "offline") {
+    startOffline(game);
     renderBoard(game.board, game.boardEl, i => handleOfflineMove(i, game));
-  }
-  else if (mode === "ai") {
-    game.inviteBox.style.display = "none";
-    game.playerXEl.textContent = `X : ${game.playerName}`;
-    game.playerOEl.textContent = "O : AI";
-    game.statusEl.textContent = "Your turn";
+  } else if (modeSelect.value === "ai") {
+    startAI(game);
     renderBoard(game.board, game.boardEl, i => handleAIMove(i, game));
-  }
-  else {
-    game.inviteBox.style.display = "block";
-    game.roomId =
-      new URLSearchParams(location.search).get("room")
-      || Math.random().toString(36).slice(2,8).toUpperCase();
-
+  } else {
     startMultiplayer(game, socket);
   }
 }
 
-/* ================= RENDER ================= */
-function render() {
-  renderBoard(game.board, game.boardEl, i => {
-    if (modeSelect.value === "offline")
-      handleOfflineMove(i, game);
-    else
-      handleAIMove(i, game);
-  });
-}
+modeSelect.onchange = init;
+
+/* ================= BUTTONS ================= */
+document.getElementById("restartBtn").onclick = init;
+
+document.getElementById("clearScoreBtn").onclick = () => {
+  game.scores = { X: 0, O: 0 };
+  game.updateScore();
+};
+
+document.getElementById("highScoreBtn").onclick = () => {
+  alert(`Your High Score: ${game.highScore}`);
+};
+
+/* ================= AUTO LOGIN ================= */
+(async () => {
+  const user = await getSessionUser();
+  if (user) startGame(user);
+})();
