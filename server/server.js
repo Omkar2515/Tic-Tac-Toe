@@ -9,8 +9,10 @@ const io = new Server(server);
 
 /* ===============================
    SERVE FRONTEND (RENDER SAFE)
+   Render root directory = server
+   Client folder = ../client
 ================================ */
-const CLIENT_PATH = path.join(process.cwd(), "client");
+const CLIENT_PATH = path.join(__dirname, "..", "client");
 
 app.use(express.static(CLIENT_PATH));
 
