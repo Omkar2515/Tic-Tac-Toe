@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Tic Tac Toe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🎮</span>
+                    <span class="logo-text">Tic Tac Toe</span>
+                </a>
+                
+                <nav class="nav-links">
+                    <!-- Guest View -->
+                    <div id="guestNav">
+                        <a href="/login" class="btn btn-outline btn-sm">Sign In</a>
+                        <a href="/register" class="btn btn-primary btn-sm">Register</a>
+                    </div>
+                    
+                    <!-- User View -->
+                    <div id="userNav" class="hidden">
+                        <div class="user-info">
+                            <div class="user-avatar" id="userAvatar">U</div>
+                            <div class="user-details">
+                                <span class="user-name" id="userName">User</span>
+                                <span class="user-points">⭐ <span id="userPoints">0</span> pts</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="logoutBtn">Logout</button>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mode Selection -->
+            <section id="modeSelection" class="mode-selection">
+                <h2 class="mode-title">Choose Your Game Mode</h2>
+                
+                <div class="mode-cards">
+                    <div class="mode-card" data-mode="pvp-local">
+                        <div class="mode-icon">👥</div>
+                        <h3 class="mode-name">Local PvP</h3>
+                        <p class="mode-desc">Play against a friend on the same device</p>
+                    </div>
+                    
+                    <div class="mode-card" data-mode="vs-ai">
+                        <div class="mode-icon">🤖</div>
+                        <h3 class="mode-name">vs AI</h3>
+                        <p class="mode-desc">Challenge the computer at various difficulties</p>
+                    </div>
+                    
+                    <div class="mode-card" data-mode="online">
+                        <div class="mode-icon">🌐</div>
+                        <h3 class="mode-name">Online PvP</h3>
+                        <p class="mode-desc">Play against others online in real-time</p>
+                    </div>
+                </div>
+
+                <!-- Difficulty Selection (for AI mode) -->
+                <div id="difficultySelection" class="difficulty-selection hidden">
+                    <h3 class="difficulty-title">Select Difficulty</h3>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn easy" data-difficulty="easy">Easy</button>
+                        <button class="difficulty-btn medium" data-difficulty="medium">Medium</button>
+                        <button class="difficulty-btn hard" data-difficulty="hard">Hard</button>
+                        <button class="difficulty-btn impossible" data-difficulty="impossible">Impossible</button>
+                    </div>
+                </div>
+
+                <!-- Start Button -->
+                <div id="startSection" class="hidden" style="margin-top: 24px; text-align: center;">
+                    <button id="startGameBtn" class="btn btn-primary">Start Game</button>
+                </div>
+            </section>
+
+            <!-- Online Room Section -->
+            <section id="onlineSection" class="online-section">
+                <div class="room-card">
+                    <h2 class="room-title">Online Play</h2>
+                    
+                    <div id="roomOptions" class="room-options">
+                        <div class="room-option" id="createRoomBtn">
+                            <div class="room-option-icon">➕</div>
+                            <div class="room-option-text">Create Room</div>
+                        </div>
+                        <div class="room-option" id="joinRoomBtn">
+                            <div class="room-option-icon">🚪</div>
+                            <div class="room-option-text">Join Room</div>
+                        </div>
+                    </div>
+
+                    <!-- Join Room Input -->
+                    <div id="joinRoomInput" class="hidden">
+                        <div class="room-input-group">
+                            <input type="text" id="roomCodeInput" class="form-input" placeholder="ROOM CODE" maxlength="6">
+                            <button class="btn btn-primary" id="joinRoomSubmit">Join</button>
+                        </div>
+                    </div>
+
+                    <!-- Waiting Room -->
+                    <div id="waitingRoom" class="hidden">
+                        <div class="room-code-display">
+                            <div class="room-code" id="displayRoomCode">------</div>
+                            <div class="room-code-label">Share this code with your friend</div>
+                        </div>
+                        <div class="waiting-message">
+                            <div class="spinner"></div>
+                            <span>Waiting for opponent to join...</span>
+                        </div>
+                        <button class="btn btn-secondary" id="cancelWaitBtn" style="margin-top: 16px;">Cancel</button>
+                    </div>
+
+                    <button class="btn btn-secondary" id="backToModes" style="margin-top: 24px;">← Back to Modes</button>
+                </div>
+            </section>
+
+            <!-- Game Container -->
+            <section id="gameContainer" class="game-container">
+                <div class="game-layout">
+                    <!-- Player 1 Panel -->
+                    <div class="player-panel player-x" id="player1Panel">
+                        <div class="player-avatar-large">X</div>
+                        <div class="player-name-large" id="player1Name">Player 1</div>
+                        <div class="player-symbol">Playing as X</div>
+                        <div class="player-score">
+                            <div class="score-item">
+                                <div class="score-value" id="player1Wins">0</div>
+                                <div class="score-label">Wins</div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-value" id="player1Draws">0</div>
+                                <div class="score-label">Draws</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Game Board Section -->
+                    <div class="game-board-section">
+                        <div class="game-status">
+                            <div class="turn-indicator x-turn" id="turnIndicator">
+                                <span id="turnText">X's Turn</span>
+                            </div>
+                        </div>
+
+                        <div class="game-board" id="gameBoard">
+                            <div class="cell" data-index="0"></div>
+                            <div class="cell" data-index="1"></div>
+                            <div class="cell" data-index="2"></div>
+                            <div class="cell" data-index="3"></div>
+                            <div class="cell" data-index="4"></div>
+                            <div class="cell" data-index="5"></div>
+                            <div class="cell" data-index="6"></div>
+                            <div class="cell" data-index="7"></div>
+                            <div class="cell" data-index="8"></div>
+                        </div>
+
+                        <div class="game-actions">
+                            <button class="btn btn-secondary" id="resetGameBtn">🔄 Reset</button>
+                            <button class="btn btn-danger" id="quitGameBtn">🚪 Quit</button>
+                        </div>
+                    </div>
+
+                    <!-- Player 2 / AI Panel -->
+                    <div class="player-panel player-o" id="player2Panel">
+                        <div class="player-avatar-large">O</div>
+                        <div class="player-name-large" id="player2Name">Player 2</div>
+                        <div class="player-symbol">Playing as O</div>
+                        <div class="player-score">
+                            <div class="score-item">
+                                <div class="score-value" id="player2Wins">0</div>
+                                <div class="score-label">Wins</div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-value" id="player2Draws">0</div>
+                                <div class="score-label">Draws</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Online Chat (shown during online games) -->
+                <div id="onlineChat" class="chat-box hidden">
+                    <div class="chat-header">💬 Chat</div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chatInput" placeholder="Type a message...">
+                        <button class="btn btn-primary btn-sm" id="sendChatBtn">Send</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Stats Section (shown when logged in) -->
+            <section id="statsSection" class="hidden">
+                <h2 class="section-title" style="margin-bottom: 24px;">📊 Your Stats</h2>
+                <div class="profile-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-number" id="statTotalGames">0</div>
+                        <div class="stat-title">Total Games</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-number" id="statWins">0</div>
+                        <div class="stat-title">Wins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-number" id="statWinRate">0%</div>
+                        <div class="stat-title">Win Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-number" id="statBestStreak">0</div>
+                        <div class="stat-title">Best Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏅</div>
+                        <div class="stat-number" id="statRank">#-</div>
+                        <div class="stat-title">Global Rank</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Leaderboard Section -->
+            <section class="leaderboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">🏆 Leaderboard</h2>
+                    <button class="btn btn-secondary btn-sm" id="refreshLeaderboard">🔄 Refresh</button>
+                </div>
+                
+                <div class="leaderboard-table">
+                    <div class="leaderboard-header">
+                        <div>Rank</div>
+                        <div>Player</div>
+                        <div>Wins</div>
+                        <div>Losses</div>
+                        <div>Streak</div>
+                        <div>Points</div>
+                    </div>
+                    <div id="leaderboardBody">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal">
+            <div class="result-icon" id="resultIcon">🎉</div>
+            <h2 class="result-title" id="resultTitle">Victory!</h2>
+            <p class="result-message" id="resultMessage">Congratulations! You won the game!</p>
+            
+            <div class="result-stats" id="resultStats">
+                <div class="stat-item">
+                    <div class="stat-value" id="resultPoints">+10</div>
+                    <div class="stat-label">Points</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="resultStreak">3</div>
+                    <div class="stat-label">Win Streak</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+                <button class="btn btn-secondary" id="backToMenuBtn">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/ai.js"></script>
+    <script src="/js/game.js"></script>
+    <script src="/js/online.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
